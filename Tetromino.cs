@@ -10,7 +10,6 @@ namespace Tetris
     public class Tetromino
     {
         public List<Point> points;
-        public volatile List<Point> previousPoints;
 
         public Point currentStartingPoint;
 
@@ -33,15 +32,8 @@ namespace Tetris
             return points;
         }
 
-        public List<Point> GetPrevPoints() 
+        public void Rotate(bool isLeft)
         {
-            return previousPoints;
-        }
-
-        public void RotateRight()
-        {
-            previousPoints = new List<Point>(points);
-
             if (points == null || points.Count == 0) return;
 
             Point reference = points[1];
@@ -58,7 +50,8 @@ namespace Tetris
                 int deltaX = refX - p.X;
                 int deltaY = refY - p.Y;
 
-                deltaX *= -1;
+                if (isLeft) deltaY *= -1;
+                else deltaX *= -1;
 
                 int x = refX + deltaY;
                 int y = refY + deltaX;
@@ -69,8 +62,6 @@ namespace Tetris
 
         public void Move(Direction direction)
         {
-            previousPoints = new List<Point>(points);
-
             for (int i = 0; i < points.Count; i++)
             {
                 Point p = points[i];

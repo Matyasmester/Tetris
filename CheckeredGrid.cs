@@ -26,6 +26,8 @@ namespace Tetris
 
         private char[,] Map;
 
+        public List<Point> pointsToClear = new List<Point>();
+
         public CheckeredGrid()
         {
             InitializeComponent();
@@ -91,26 +93,23 @@ namespace Tetris
             this.Invalidate();
         }
 
-        public void ClearAreaAround(Point reference, int areaSize)
+        public void ClearPoints()
         {
-            int startX = reference.X;
-            int startY = reference.Y;
-
-            for (int x = startX - areaSize; x <= startX + areaSize; x++)
+            foreach(Point p in pointsToClear)
             {
-                for( int y = startY - areaSize; y <= startY + areaSize; y++)
+                try
                 {
-                    try
-                    {
-                        DrawRectAt(new Point(x, y), bgBrush);
-                        SetEmpty(x, y);
-                    } 
-                    catch(IndexOutOfRangeException)
-                    {
-                        continue;
-                    }
+                    DrawRectAt(p, bgBrush);
+
+                    SetEmpty(p.X, p.Y);
+                }
+                catch (IndexOutOfRangeException)
+                {
+                    continue;
                 }
             }
+
+            pointsToClear.Clear();
         }
 
         public bool TryFillFormation(List<Point> points, Brush brush)
@@ -136,17 +135,6 @@ namespace Tetris
 
             return true;
         }
-
-        /*
-        public void ClearFormation(List<Point> points)
-        {
-            foreach(Point p in points)
-            {
-                DrawRectAt(p, bgBrush);
-
-                SetEmpty(p.X, p.Y);
-            }
-        }*/
 
         public char[,] GetMapState()
         {

@@ -15,8 +15,6 @@ namespace Tetris
     {
         private const int squareUnit = 25;
 
-        private Brush redBrush = new SolidBrush(Color.Red);
-
         private Tetromino currentTetromino;
 
         private bool isTetrominoPresent = false;
@@ -55,27 +53,40 @@ namespace Tetris
 
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
         {
-            if (currentTetromino == null) return;
+            if (!isTetrominoPresent) return;
+
+            mainCheckeredGrid.pointsToClear.AddRange(currentTetromino.GetPoints());
+
+            Direction direction;
 
             switch (e.KeyCode)
             {
                 case Keys.A:
-                    currentTetromino.Move(Direction.Left);
+                    direction = Direction.Left;
                     break;
                 case Keys.D:
-                    currentTetromino.Move(Direction.Right);
+                    direction = Direction.Right;
                     break;
                 case Keys.S:
-                    currentTetromino.Move(Direction.Down);
+                    direction = Direction.Down;
                     break;
                 case Keys.W:
-                    currentTetromino.RotateRight();
-                    break;
+                    currentTetromino.Rotate(false);
+
+                    // undo lol
+                    if (!IsValidRotation(currentTetromino.GetPoints())) currentTetromino.Rotate(true);
+
+                    PaintCurrentTetromino();
+
+                    return;
                 default:
-                    break;
+                    return;
             }
 
-            PaintTetromino();
+            if (CanCurrentMove(direction)) currentTetromino.Move(direction);
+            else MessageBox.Show("DEBUG: cant move further"); 
+
+            PaintCurrentTetromino();
         }
 
         private void SpawnTetromino()
@@ -84,16 +95,39 @@ namespace Tetris
 
             currentTetromino = allTetrominos[index];
 
-            currentTetromino.previousPoints = currentTetromino.FormAt(spawnPoint);
+            mainCheckeredGrid.pointsToClear.AddRange(currentTetromino.FormAt(spawnPoint));
 
             isTetrominoPresent = true;
         }
 
-        private void PaintTetromino()
+        private void PaintCurrentTetromino()
         {
-            mainCheckeredGrid.ClearAreaAround(currentTetromino.GetPrevPoints()[2], 3);
+            mainCheckeredGrid.ClearPoints();
 
             mainCheckeredGrid.TryFillFormation(currentTetromino.GetPoints(), new SolidBrush(currentTetromino.color));
+        }
+
+        private bool IsValidRotation(IEnumerable<Point> rotated)
+        {
+            return rotated.All(p => p.X >= 0 && p.X < mainCheckeredGrid.GetWidthInTiles() 
+                && p.Y >= 0 && p.Y < mainCheckeredGrid.GetHeightInTiles());
+        }
+
+        private bool CanCurrentMove(Direction direction)
+        {
+            List<Point> currentPoints = currentTetromino.GetPoints();
+
+            switch (direction)
+            {
+                case Direction.Down:
+                    return currentPoints.Max(p => p.Y) < mainCheckeredGrid.GetHeightInTiles() - 1;
+                case Direction.Left:
+                    return currentPoints.Min(p => p.X) > 0;
+                case Direction.Right:
+                    return currentPoints.Max(p => p.X) < mainCheckeredGrid.GetWidthInTiles() - 1;
+                default:
+                    return false;
+            }
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -115,9 +149,12 @@ namespace Tetris
         {
             if(!isTetrominoPresent) SpawnTetromino();
 
-            PaintTetromino();
+            PaintCurrentTetromino();
 
-            currentTetromino.Move(Direction.Down);
+            mainCheckeredGrid.pointsToClear.AddRange(currentTetromino.GetPoints());
+
+            if(CanCurrentMove(Direction.Down)) currentTetromino.Move(Direction.Down);
+            //else assimilate
         }
     }
 }
