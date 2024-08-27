@@ -71,12 +71,9 @@ namespace Tetris
                     direction = Direction.Down;
                     break;
                 case Keys.W:
-                    currentTetromino.Rotate(false);
+                    if (IsValidRotation(currentTetromino.SimulateRotation(false))) currentTetromino.Rotate(false);
 
-                    // undo lol
-                    if (!IsValidRotation(currentTetromino.GetPoints())) currentTetromino.Rotate(true);
-
-                    PaintCurrentTetromino();
+                    PaintOccupiedTiles();
 
                     return;
                 default:
@@ -84,9 +81,17 @@ namespace Tetris
             }
 
             if (CanCurrentMove(direction)) currentTetromino.Move(direction);
-            else MessageBox.Show("DEBUG: cant move further"); 
+            else
+            {
+                if(direction == Direction.Down)
+                {
+                    mainCheckeredGrid.SaveTetromino(currentTetromino);
 
-            PaintCurrentTetromino();
+                    isTetrominoPresent = false;
+                }
+            }
+
+            PaintOccupiedTiles();
         }
 
         private void SpawnTetromino()
@@ -100,17 +105,20 @@ namespace Tetris
             isTetrominoPresent = true;
         }
 
-        private void PaintCurrentTetromino()
+        private void PaintOccupiedTiles()
         {
             mainCheckeredGrid.ClearPoints();
 
-            mainCheckeredGrid.TryFillFormation(currentTetromino.GetPoints(), new SolidBrush(currentTetromino.color));
+            mainCheckeredGrid.FillSavedTetrominos();
+
+            mainCheckeredGrid.FillTetromino(currentTetromino);
         }
 
-        private bool IsValidRotation(IEnumerable<Point> rotated)
+        private bool IsValidRotation(List<Point> rotated)
         {
-            return rotated.All(p => p.X >= 0 && p.X < mainCheckeredGrid.GetWidthInTiles() 
-                && p.Y >= 0 && p.Y < mainCheckeredGrid.GetHeightInTiles());
+            return rotated.All(p => p.X >= 0 && p.X < mainCheckeredGrid.GetWidthInTiles()
+                && p.Y >= 0 && p.Y < mainCheckeredGrid.GetHeightInTiles() 
+                && !mainCheckeredGrid.savedTetrominoPoints.Any(kwp => kwp.Key == p));
         }
 
         private bool CanCurrentMove(Direction direction)
@@ -120,11 +128,23 @@ namespace Tetris
             switch (direction)
             {
                 case Direction.Down:
-                    return currentPoints.Max(p => p.Y) < mainCheckeredGrid.GetHeightInTiles() - 1;
+                    int maxY = currentPoints.Max(p => p.Y);
+
+                    return maxY < mainCheckeredGrid.GetHeightInTiles() - 1
+                        && currentPoints.All(p => !mainCheckeredGrid.savedTetrominoPoints.Any(kwp => kwp.Key == new Point(p.X, p.Y + 1)));
+
                 case Direction.Left:
-                    return currentPoints.Min(p => p.X) > 0;
+                    int minX = currentPoints.Min(p => p.X);
+
+                    return minX > 0 
+                        && currentPoints.All(p => !mainCheckeredGrid.savedTetrominoPoints.Any(kwp => kwp.Key == new Point(p.X - 1, p.Y)));
+
                 case Direction.Right:
-                    return currentPoints.Max(p => p.X) < mainCheckeredGrid.GetWidthInTiles() - 1;
+                    int maxX = currentPoints.Max(p => p.X);
+
+                    return maxX < mainCheckeredGrid.GetWidthInTiles() - 1
+                        && currentPoints.All(p => !mainCheckeredGrid.savedTetrominoPoints.Any(kwp => kwp.Key == new Point(p.X + 1, p.Y)));
+
                 default:
                     return false;
             }
@@ -149,12 +169,19 @@ namespace Tetris
         {
             if(!isTetrominoPresent) SpawnTetromino();
 
-            PaintCurrentTetromino();
+            List<Point> currentPoints = currentTetromino.GetPoints();
 
-            mainCheckeredGrid.pointsToClear.AddRange(currentTetromino.GetPoints());
+            PaintOccupiedTiles();
+
+            mainCheckeredGrid.pointsToClear.AddRange(currentPoints);
 
             if(CanCurrentMove(Direction.Down)) currentTetromino.Move(Direction.Down);
-            //else assimilate
+            else
+            {
+                mainCheckeredGrid.SaveTetromino(currentTetromino);
+
+                isTetrominoPresent = false;
+            }
         }
     }
 }

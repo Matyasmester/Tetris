@@ -35,7 +35,7 @@
             // 
             // mainCheckeredGrid
             // 
-            this.mainCheckeredGrid.BackColor = System.Drawing.Color.LightGray;
+            this.mainCheckeredGrid.BackColor = System.Drawing.Color.Black;
             this.mainCheckeredGrid.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.mainCheckeredGrid.Location = new System.Drawing.Point(91, 11);
             this.mainCheckeredGrid.Margin = new System.Windows.Forms.Padding(2);
@@ -52,7 +52,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.DarkGray;
+            this.BackColor = System.Drawing.Color.DimGray;
             this.ClientSize = new System.Drawing.Size(684, 611);
             this.Controls.Add(this.mainCheckeredGrid);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;

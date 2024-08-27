@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -26,13 +27,15 @@ namespace Tetris
 
         private char[,] Map;
 
+        public List<KeyValuePair<Point, Color>> savedTetrominoPoints = new List<KeyValuePair<Point, Color>>();
+
         public List<Point> pointsToClear = new List<Point>();
 
         public CheckeredGrid()
         {
             InitializeComponent();
 
-            bgBrush = new SolidBrush(this.BackColor);
+            bgBrush = new SolidBrush(Color.Black);
         }
 
         private void CheckeredGrid_Load(object sender, EventArgs e)
@@ -112,33 +115,44 @@ namespace Tetris
             pointsToClear.Clear();
         }
 
-        public bool TryFillFormation(List<Point> points, Brush brush)
+        public void FillSavedTetrominos()
         {
-            foreach(Point p in points)
+            foreach(KeyValuePair<Point, Color> kwp in this.savedTetrominoPoints)
             {
-                int x = p.X;
-                int y = p.Y;
+                Point p = kwp.Key;
 
+                DrawRectAt(p, new SolidBrush(kwp.Value));
+            }
+
+            this.Invalidate();
+        }
+
+        public void FillTetromino(Tetromino t)
+        {
+            foreach (Point p in t.GetPoints())
+            {
                 try
                 {
-                    SetOccupied(x, y);
-                } 
-                catch(IndexOutOfRangeException)
+                    SetOccupied(p.X, p.Y);
+                }
+                catch (IndexOutOfRangeException)
                 {
-                    return false;
+                    return;
                 }
 
-                DrawRectAt(new Point(x, y), brush);
+                DrawRectAt(p, new SolidBrush(t.GetColor()));
             }
 
             this.Invalidate();
 
-            return true;
         }
 
-        public char[,] GetMapState()
+        public void SaveTetromino(Tetromino t)
         {
-            return Map;
+            foreach(Point p in t.GetPoints())
+            {
+                this.savedTetrominoPoints.Add(new KeyValuePair<Point, Color>(p, t.GetColor()));
+            }
         }
 
         public int GetWidthInTiles()
@@ -156,9 +170,26 @@ namespace Tetris
             Map[x * squareUnit, y * squareUnit] = Empty;
         }
 
-        public void SetOccupied(int x, int y)
+        private void SetOccupied(int x, int y)
         {
             Map[x * squareUnit, y * squareUnit] = Occupied;
+        }
+
+        public void SetOccupied(Tetromino t)
+        {
+            foreach(Point p in t.GetPoints())
+            {
+                this.SetOccupied(p.X, p.Y);
+            }
+        }
+
+        public bool IsOccupied(Point p)
+        {
+            try
+            {
+                return Map[p.X * squareUnit, p.Y * squareUnit] == Occupied;
+            }
+            catch (IndexOutOfRangeException) {  return true; }
         }
 
         protected override void OnPaint(PaintEventArgs e)

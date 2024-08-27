@@ -13,7 +13,7 @@ namespace Tetris
 
         public Point currentStartingPoint;
 
-        public Color color;
+        private protected Color color;
 
         public Tetromino()
         {
@@ -32,9 +32,16 @@ namespace Tetris
             return points;
         }
 
-        public void Rotate(bool isLeft)
+        public Color GetColor()
         {
-            if (points == null || points.Count == 0) return;
+            return color;
+        }
+
+        private protected List<Point> InnerRotate(bool isLeft)
+        {
+            List<Point> retval = new List<Point>();
+
+            if (points == null || points.Count == 0) return retval;
 
             Point reference = points[1];
 
@@ -45,8 +52,6 @@ namespace Tetris
             {
                 Point p = points[i];
 
-                if (p == reference) continue;
-
                 int deltaX = refX - p.X;
                 int deltaY = refY - p.Y;
 
@@ -56,8 +61,20 @@ namespace Tetris
                 int x = refX + deltaY;
                 int y = refY + deltaX;
 
-                points[i] = new Point(x, y);
+                retval.Add(new Point(x, y));
             }
+
+            return retval;
+        }
+
+        public void Rotate(bool isLeft)
+        {
+            this.points = new List<Point>(this.InnerRotate(isLeft));
+        }
+
+        public List<Point> SimulateRotation(bool isLeft)
+        {
+            return this.InnerRotate(isLeft);
         }
 
         public void Move(Direction direction)
